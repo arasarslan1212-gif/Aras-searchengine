@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AI Fact Searcher</title>
+<style>
+body {
+  font-family: sans-serif;
+  background: #0f0f0f;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.container { width: 600px; }
+input, button { padding: 10px; }
+.result { margin-top: 20px; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🔍 AI Fact Searcher</h1>
+
+  <input id="query" placeholder="Ask anything..." />
+  <button onclick="search()">Search</button>
+
+  <div class="result">
+    <p id="status"></p>
+    <p id="answer"></p>
+  </div>
+</div>
+
+<script>
+async function search() {
+  const query = document.getElementById("query").value;
+  const status = document.getElementById("status");
+  const answer = document.getElementById("answer");
+
+  status.textContent = "Searching...";
+  answer.textContent = "";
+
+  try {
+    const res = await fetch(
+      `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`
+    );
+
+    const data = await res.json();
+
+    if (data.AbstractText) {
+      status.textContent = "From DuckDuckGo";
+      answer.textContent = data.AbstractText;
+    } else {
+      const wiki = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`
+      );
+      const w = await wiki.json();
+
+      if (w.extract) {
+        status.textContent = "From Wikipedia";
+        answer.textContent = w.extract;
+      } else {
+        status.textContent = "No result";
+        answer.textContent = "Try another question.";
+      }
+    }
+
+  } catch (err) {
+    status.textContent = "Error";
+    answer.textContent = err.message;
+  }
+}
+</script>
+
+</body>
+</html>
