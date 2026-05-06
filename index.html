@@ -1,77 +1,188 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>AI Fact Searcher</title>
+<title>Aras Search Engine</title>
 <style>
 body {
-  font-family: sans-serif;
-  background: #0f0f0f;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #0f0f0f, #1e1e2f);
   color: white;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
 }
-.container { width: 600px; }
-input, button { padding: 10px; }
-.result { margin-top: 20px; }
+
+.container {
+  width: 90%;
+  max-width: 700px;
+  text-align: center;
+}
+
+.logo {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: #aaa;
+  margin-bottom: 30px;
+}
+
+.search-box {
+  display: flex;
+  background: #181818;
+  border: 1px solid #333;
+  border-radius: 999px;
+  padding: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 16px;
+  padding: 12px 16px;
+  outline: none;
+}
+
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  background: #4f46e5;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #6366f1;
+}
+
+.result {
+  display: none;
+  margin-top: 25px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 22px;
+  text-align: left;
+  backdrop-filter: blur(12px);
+}
+
+.status {
+  color: #aaa;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.answer {
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+.suggestions {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.chip:hover {
+  background: rgba(255,255,255,0.15);
+}
 </style>
 </head>
 
 <body>
-
 <div class="container">
-  <h1>🔍 AI Fact Searcher</h1>
+  <div class="logo">🔍 Aras Search</div>
+  <p class="subtitle">A simple smart search engine using Wikipedia</p>
 
-  <input id="query" placeholder="Ask anything..." />
-  <button onclick="search()">Search</button>
+  <div class="search-box">
+    <input id="query" placeholder="Search anything..." />
+    <button onclick="search()">Search</button>
+  </div>
 
-  <div class="result">
-    <p id="status"></p>
-    <p id="answer"></p>
+  <div class="suggestions">
+    <div class="chip" onclick="setQuery('Mustafa Kemal Atatürk')">Atatürk</div>
+    <div class="chip" onclick="setQuery('BMW M4')">BMW M4</div>
+    <div class="chip" onclick="setQuery('Apple M4 chip')">Apple M4</div>
+    <div class="chip" onclick="setQuery('Speed of light')">Speed of light</div>
+  </div>
+
+  <div class="result" id="result">
+    <p class="status" id="status">Searching...</p>
+    <p class="answer" id="answer"></p>
   </div>
 </div>
 
 <script>
+const input = document.getElementById("query");
+
+input.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") search();
+});
+
+function setQuery(text) {
+  input.value = text;
+  search();
+}
+
 async function search() {
-  const query = document.getElementById("query").value;
+  const query = input.value.trim();
   const status = document.getElementById("status");
   const answer = document.getElementById("answer");
+  const result = document.getElementById("result");
 
-  status.textContent = "Searching...";
+  if (!query) return;
+
+  result.style.display = "block";
+  status.textContent = "Searching Wikipedia...";
   answer.textContent = "";
 
   try {
-    const res = await fetch(
-      `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`
+    const searchRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`
     );
 
-    const data = await res.json();
+    const searchData = await searchRes.json();
 
-    if (data.AbstractText) {
-      status.textContent = "From DuckDuckGo";
-      answer.textContent = data.AbstractText;
-    } else {
-      const wiki = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`
-      );
-      const w = await wiki.json();
-
-      if (w.extract) {
-        status.textContent = "From Wikipedia";
-        answer.textContent = w.extract;
-      } else {
-        status.textContent = "No result";
-        answer.textContent = "Try another question.";
-      }
+    if (!searchData.query.search.length) {
+      status.textContent = "No result found";
+      answer.textContent = "Try searching with more specific words.";
+      return;
     }
 
+    const bestTitle = searchData.query.search[0].title;
+
+    const summaryRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestTitle)}`
+    );
+
+    const summaryData = await summaryRes.json();
+
+    status.textContent = "Top result: " + bestTitle;
+    answer.textContent = summaryData.extract || "No summary available.";
   } catch (err) {
     status.textContent = "Error";
     answer.textContent = err.message;
   }
 }
 </script>
-
 </body>
 </html>
