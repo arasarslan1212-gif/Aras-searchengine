@@ -1,185 +1,693 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Aras Search Engine</title>
+
 <style>
-body {
+* {
+  box-sizing: border-box;
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #0f0f0f, #1e1e2f);
-  color: white;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  padding: 0;
 }
 
-.container {
-  width: 90%;
-  max-width: 700px;
+body {
+  font-family: Inter, Arial, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.25), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.18), transparent 35%),
+    #0b0b12;
+  color: white;
+  min-height: 100vh;
+}
+
+.page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 40px 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: 900px;
+}
+
+.header {
   text-align: center;
+  margin-top: 35px;
+  margin-bottom: 32px;
 }
 
 .logo {
-  font-size: 42px;
-  margin-bottom: 10px;
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.logo span {
+  color: #818cf8;
 }
 
 .subtitle {
-  color: #aaa;
-  margin-bottom: 30px;
+  margin-top: 10px;
+  color: #a1a1aa;
+  font-size: 16px;
 }
 
-.search-box {
+.search-card {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 28px;
+  padding: 14px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+}
+
+.search-row {
   display: flex;
-  background: #181818;
-  border: 1px solid #333;
-  border-radius: 999px;
-  padding: 8px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  gap: 10px;
+  align-items: center;
+}
+
+.search-icon {
+  font-size: 24px;
+  padding-left: 10px;
 }
 
 input {
   flex: 1;
   background: transparent;
   border: none;
-  color: white;
-  font-size: 16px;
-  padding: 12px 16px;
   outline: none;
+  color: white;
+  font-size: 17px;
+  padding: 18px 8px;
+}
+
+input::placeholder {
+  color: #71717a;
 }
 
 button {
   border: none;
   border-radius: 999px;
-  padding: 12px 22px;
-  background: #4f46e5;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
   color: white;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 button:hover {
-  background: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(79,70,229,0.35);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.chip {
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #e4e4e7;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.chip:hover {
+  background: rgba(255,255,255,0.16);
 }
 
 .result {
   display: none;
-  margin-top: 25px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
-  padding: 22px;
-  text-align: left;
-  backdrop-filter: blur(12px);
+  margin-top: 28px;
 }
 
-.status {
-  color: #aaa;
-  font-size: 14px;
+.status-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #a1a1aa;
+  margin-bottom: 14px;
+}
+
+.loader {
+  width: 15px;
+  height: 15px;
+  border: 2px solid #3f3f46;
+  border-top-color: #818cf8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.answer-card {
+  background: rgba(255,255,255,0.075);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 22px;
+  padding: 24px;
+  line-height: 1.7;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+.answer-title {
+  font-size: 22px;
+  font-weight: 800;
   margin-bottom: 10px;
 }
 
-.answer {
-  line-height: 1.7;
+.answer-text {
+  color: #e4e4e7;
   font-size: 16px;
+  white-space: pre-wrap;
 }
 
-.suggestions {
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
   margin-top: 18px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
-.chip {
-  padding: 8px 14px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 999px;
+.mini-card {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.mini-card h3 {
+  margin-bottom: 8px;
+  color: #93c5fd;
+}
+
+.source-link {
+  display: inline-block;
+  margin-top: 14px;
+  color: #67e8f9;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.source-link:hover {
+  text-decoration: underline;
+}
+
+.results-list {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.result-item {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 16px;
   cursor: pointer;
+}
+
+.result-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.result-item h4 {
+  color: #c4b5fd;
+  margin-bottom: 6px;
+}
+
+.result-item p {
+  color: #d4d4d8;
+  font-size: 14px;
+}
+
+.history {
+  margin-top: 30px;
+  display: none;
+}
+
+.history h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #a1a1aa;
+}
+
+.history-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.history-item {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.footer {
+  margin-top: 35px;
+  text-align: center;
+  color: #71717a;
   font-size: 13px;
 }
 
-.chip:hover {
-  background: rgba(255,255,255,0.15);
+.badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 4px 8px;
+  background: rgba(34,197,94,0.16);
+  color: #86efac;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .logo {
+    font-size: 38px;
+  }
+
+  .search-row {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  input {
+    width: 100%;
+    text-align: center;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 </head>
 
 <body>
-<div class="container">
-  <div class="logo">AraSearch</div>
-  <p class="subtitle">A simple smart search engine using Wikipedia</p>
+<div class="page">
+  <main class="app">
 
-  <div class="search-box">
-    <input id="query" placeholder="Search anything..." />
-    <button onclick="search()">Search</button>
-  </div>
+    <section class="header">
+      <div class="logo">🔍 Aras <span>Search</span></div>
+      <p class="subtitle">
+        Smart web-style search using Wikipedia data. Can search, compare, and show results.
+      </p>
+    </section>
 
-<div class="suggestions">
-  <div class="chip" onclick="setQuery('BMW M4')">BMW M4</div>
-  <div class="chip" onclick="setQuery('What is the value of π')">Value of π</div>
-  <div class="chip" onclick="setQuery('Speed of light')">Speed of light</div>
-</div>
-  <div class="result" id="result">
-    <p class="status" id="status">Searching...</p>
-    <p class="answer" id="answer"></p>
-  </div>
+    <section class="search-card">
+      <div class="search-row">
+        <div class="search-icon">⌕</div>
+        <input id="query" placeholder="Search anything or compare things..." />
+        <button id="searchBtn">Search</button>
+      </div>
+    </section>
+
+    <section class="chips">
+      <div class="chip" onclick="quickSearch('What is the value of pi?')">Value of π</div>
+      <div class="chip" onclick="quickSearch('BMW M4 vs BMW M5')">BMW M4 vs M5</div>
+      <div class="chip" onclick="quickSearch('Which is bigger Earth or Mars?')">Earth vs Mars</div>
+      <div class="chip" onclick="quickSearch('Speed of light')">Speed of light</div>
+      <div class="chip" onclick="quickSearch('Apple')">Apple</div>
+      <div class="chip" onclick="quickSearch('Cristiano Ronaldo')">Ronaldo</div>
+    </section>
+
+    <section class="result" id="result">
+      <div class="status-box">
+        <div class="loader" id="loader"></div>
+        <span id="status">Searching...</span>
+      </div>
+
+      <div class="answer-card">
+        <div class="answer-title" id="answerTitle">Result</div>
+        <div class="answer-text" id="answer"></div>
+        <div id="extra"></div>
+      </div>
+    </section>
+
+    <section class="history" id="history">
+      <h3>Recent searches</h3>
+      <div class="history-list" id="historyList"></div>
+    </section>
+
+    <section class="footer">
+      Made by Aras • Powered by Wikipedia public APIs
+      <span class="badge">No API key</span>
+    </section>
+
+  </main>
 </div>
 
 <script>
 const input = document.getElementById("query");
+const searchBtn = document.getElementById("searchBtn");
+const resultBox = document.getElementById("result");
+const loader = document.getElementById("loader");
+const statusText = document.getElementById("status");
+const answerTitle = document.getElementById("answerTitle");
+const answer = document.getElementById("answer");
+const extra = document.getElementById("extra");
+const historyBox = document.getElementById("history");
+const historyList = document.getElementById("historyList");
 
-input.addEventListener("keydown", function(e) {
-  if (e.key === "Enter") search();
+let searchHistory = [];
+
+searchBtn.addEventListener("click", search);
+
+input.addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    search();
+  }
 });
 
-function setQuery(text) {
+function quickSearch(text) {
   input.value = text;
   search();
 }
 
+function showLoading(text) {
+  resultBox.style.display = "block";
+  loader.style.display = "block";
+  statusText.textContent = text;
+  answerTitle.textContent = "";
+  answer.textContent = "";
+  extra.innerHTML = "";
+  searchBtn.disabled = true;
+}
+
+function stopLoading(text) {
+  loader.style.display = "none";
+  statusText.textContent = text;
+  searchBtn.disabled = false;
+}
+
+function saveHistory(query) {
+  if (!query) return;
+
+  searchHistory = searchHistory.filter(item => item !== query);
+  searchHistory.unshift(query);
+
+  if (searchHistory.length > 8) {
+    searchHistory.pop();
+  }
+
+  renderHistory();
+}
+
+function renderHistory() {
+  historyBox.style.display = "block";
+  historyList.innerHTML = "";
+
+  searchHistory.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "history-item";
+    div.textContent = item;
+    div.onclick = function() {
+      quickSearch(item);
+    };
+    historyList.appendChild(div);
+  });
+}
+
+function cleanQuestion(query) {
+  return query
+    .replace(/\?/g, "")
+    .replace(/please/gi, "")
+    .trim();
+}
+
+function isComparisonQuestion(query) {
+  const lower = query.toLowerCase();
+
+  return (
+    lower.includes(" vs ") ||
+    lower.includes(" versus ") ||
+    lower.includes("compare ") ||
+    lower.includes("which is ") ||
+    lower.includes("which one ") ||
+    lower.includes(" or ")
+  );
+}
+
+function splitComparison(query) {
+  let cleaned = cleanQuestion(query);
+
+  cleaned = cleaned
+    .replace(/which one is/gi, "")
+    .replace(/which is/gi, "")
+    .replace(/which one/gi, "")
+    .replace(/compare/gi, "")
+    .replace(/better/gi, "")
+    .replace(/faster/gi, "")
+    .replace(/bigger/gi, "")
+    .replace(/larger/gi, "")
+    .replace(/older/gi, "")
+    .replace(/newer/gi, "")
+    .replace(/stronger/gi, "")
+    .replace(/more powerful/gi, "")
+    .replace(/more expensive/gi, "")
+    .replace(/cheaper/gi, "")
+    .replace(/:/g, "")
+    .trim();
+
+  let parts = cleaned
+    .split(/\s+vs\s+|\s+versus\s+|\s+or\s+|\s+and\s+/i)
+    .map(part => part.trim())
+    .filter(part => part.length > 1);
+
+  if (parts.length > 2) {
+    parts = [parts[0], parts[1]];
+  }
+
+  return parts;
+}
+
 async function search() {
   const query = input.value.trim();
-  const status = document.getElementById("status");
-  const answer = document.getElementById("answer");
-  const result = document.getElementById("result");
 
   if (!query) return;
 
-  result.style.display = "block";
-  status.textContent = "Searching Wikipedia...";
-  answer.textContent = "";
+  saveHistory(query);
+  showLoading("Thinking about your search...");
 
   try {
-    const searchRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`
-    );
-
-    const searchData = await searchRes.json();
-
-    if (!searchData.query.search.length) {
-      status.textContent = "No result found";
-      answer.textContent = "Try searching with more specific words.";
-      return;
+    if (isComparisonQuestion(query)) {
+      await comparisonSearch(query);
+    } else {
+      await normalSearch(query);
     }
-
-    const bestTitle = searchData.query.search[0].title;
-
-    const summaryRes = await fetch(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestTitle)}`
-    );
-
-    const summaryData = await summaryRes.json();
-
-    status.textContent = "Top result: " + bestTitle;
-    answer.textContent = summaryData.extract || "No summary available.";
-  } catch (err) {
-    status.textContent = "Error";
-    answer.textContent = err.message;
+  } catch (error) {
+    stopLoading("Error");
+    answerTitle.textContent = "Something went wrong";
+    answer.textContent = error.message;
   }
+}
+
+async function normalSearch(query) {
+  showLoading("Searching Wikipedia...");
+
+  const result = await getBestWikipediaSummary(query);
+
+  if (!result || !result.extract) {
+    stopLoading("No result found");
+    answerTitle.textContent = "No result";
+    answer.textContent = "Try searching with more specific words.";
+    return;
+  }
+
+  stopLoading("Answer found");
+  answerTitle.textContent = result.title;
+  answer.textContent = result.extract;
+
+  if (result.url) {
+    extra.innerHTML = `
+      <a class="source-link" href="${result.url}" target="_blank">
+        Open source →
+      </a>
+    `;
+  }
+
+  const related = await getSearchResults(query);
+
+  if (related.length > 1) {
+    showRelatedResults(related.slice(1, 5));
+  }
+}
+
+async function comparisonSearch(query) {
+  showLoading("Detecting comparison question...");
+
+  const parts = splitComparison(query);
+
+  if (parts.length < 2) {
+    stopLoading("Comparison detected");
+    answerTitle.textContent = "I need two things";
+    answer.textContent =
+      "I detected a comparison question, but I could not clearly find two things to compare. Try writing it like: BMW M4 vs BMW M5.";
+    return;
+  }
+
+  const item1 = parts[0];
+  const item2 = parts[1];
+
+  showLoading("Searching both topics...");
+
+  const data1 = await getBestWikipediaSummary(item1);
+  const data2 = await getBestWikipediaSummary(item2);
+
+  stopLoading("Comparison search completed");
+
+  answerTitle.textContent = "Comparison: " + item1 + " vs " + item2;
+
+  let intro = "";
+
+  if (query.toLowerCase().includes("faster")) {
+    intro =
+      "This question needs exact speed data, which Wikipedia summaries may not always provide. Here is information about both, so you can compare them:";
+  } else if (query.toLowerCase().includes("bigger") || query.toLowerCase().includes("larger")) {
+    intro =
+      "This question is asking about size. Here are both topics so you can compare the details:";
+  } else if (query.toLowerCase().includes("better")) {
+    intro =
+      "Better can depend on opinion, purpose, price, and personal preference. Here are both topics:";
+  } else {
+    intro =
+      "Here are the top results for both sides of your comparison:";
+  }
+
+  answer.textContent = intro;
+
+  extra.innerHTML = `
+    <div class="grid">
+      <div class="mini-card">
+        <h3>${data1.title || item1}</h3>
+        <p>${data1.extract || "No summary found."}</p>
+        ${
+          data1.url
+            ? `<a class="source-link" href="${data1.url}" target="_blank">Open source →</a>`
+            : ""
+        }
+      </div>
+
+      <div class="mini-card">
+        <h3>${data2.title || item2}</h3>
+        <p>${data2.extract || "No summary found."}</p>
+        ${
+          data2.url
+            ? `<a class="source-link" href="${data2.url}" target="_blank">Open source →</a>`
+            : ""
+        }
+      </div>
+    </div>
+
+    <div style="margin-top:18px; color:#d4d4d8;">
+      <b>Important:</b> This app can search and organize information, but it is not a real AI model.
+      For perfect comparisons, it would need an AI API or a special database for the topic.
+    </div>
+  `;
+}
+
+async function getSearchResults(query) {
+  const url =
+    "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=" +
+    encodeURIComponent(query) +
+    "&format=json&origin=*";
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!data.query || !data.query.search) {
+    return [];
+  }
+
+  return data.query.search.map(item => ({
+    title: item.title,
+    snippet: removeHtml(item.snippet)
+  }));
+}
+
+async function getBestWikipediaSummary(query) {
+  const searchResults = await getSearchResults(query);
+
+  if (!searchResults.length) {
+    return {};
+  }
+
+  const bestTitle = searchResults[0].title;
+
+  const summaryUrl =
+    "https://en.wikipedia.org/api/rest_v1/page/summary/" +
+    encodeURIComponent(bestTitle);
+
+  const summaryResponse = await fetch(summaryUrl);
+  const summaryData = await summaryResponse.json();
+
+  return {
+    title: summaryData.title || bestTitle,
+    extract: summaryData.extract || "",
+    url:
+      summaryData.content_urls &&
+      summaryData.content_urls.desktop &&
+      summaryData.content_urls.desktop.page
+        ? summaryData.content_urls.desktop.page
+        : ""
+  };
+}
+
+function showRelatedResults(results) {
+  if (!results.length) return;
+
+  let html = `
+    <div class="results-list">
+      <h3 style="margin-top:10px;">Related results</h3>
+  `;
+
+  results.forEach(item => {
+    html += `
+      <div class="result-item" onclick="quickSearch('${escapeText(item.title)}')">
+        <h4>${item.title}</h4>
+        <p>${item.snippet}</p>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+
+  extra.innerHTML += html;
+}
+
+function removeHtml(text) {
+  const div = document.createElement("div");
+  div.innerHTML = text;
+  return div.textContent || div.innerText || "";
+}
+
+function escapeText(text) {
+  return text.replace(/'/g, "\\'");
 }
 </script>
 </body>
