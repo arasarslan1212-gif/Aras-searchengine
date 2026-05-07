@@ -1,25 +1,27 @@
-// =====================================================
-// ARAS SMART SEARCH ENGINE
-// Full replacement script.js
-// Includes:
-// - Normal search
-// - Wikipedia fallback
-// - Built-in facts
-// - Smart comparisons
-// - Direct answers
-// - Highlighting
-// - Related results
-// - Search history
-// - Voice search
-// =====================================================
+/* =====================================================
+   ARAS SEARCH - SCRIPT.JS
+   Full polished version
+   Features:
+   - Normal search
+   - Wikipedia search
+   - Built-in facts
+   - Direct answers
+   - Smart comparisons
+   - Voice input
+   - Voice output toggle
+   - Search history
+   - Related results
+   ===================================================== */
 
 
-// =====================================================
-// 1. HTML ELEMENTS
-// =====================================================
+/* =====================================================
+   1. ELEMENTS
+   ===================================================== */
 
 const queryInput = document.getElementById("query");
 const searchBtn = document.getElementById("searchBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+const speakToggleBtn = document.getElementById("speakToggleBtn");
 
 const resultSection = document.getElementById("result");
 const comparisonSection = document.getElementById("comparison");
@@ -45,114 +47,115 @@ const compare2Text = document.getElementById("compare2Text");
 const relatedList = document.getElementById("relatedList");
 const historyList = document.getElementById("historyList");
 
-const suggestionButtons = document.querySelectorAll(".suggestion");
+const chips = document.querySelectorAll(".chip");
 
 
-// =====================================================
-// 2. CREATE VOICE BUTTON AUTOMATICALLY
-// =====================================================
+/* =====================================================
+   2. APP STATE
+   ===================================================== */
 
-let voiceBtn = document.getElementById("voiceBtn");
-
-if (!voiceBtn && searchBtn) {
-  voiceBtn = document.createElement("button");
-  voiceBtn.id = "voiceBtn";
-  voiceBtn.type = "button";
-  voiceBtn.textContent = "🎤";
-  voiceBtn.title = "Voice search";
-
-  searchBtn.insertAdjacentElement("afterend", voiceBtn);
-}
+let searchHistory = [];
+let speakEnabled = false;
+let isSearching = false;
+let lastSpokenText = "";
 
 
-// =====================================================
-// 3. BUILT-IN FACT DATABASE
-// =====================================================
+/* =====================================================
+   3. BUILT-IN FACT DATABASE
+   ===================================================== */
 
 const FACTS = {
-  "earth": {
+  earth: {
     name: "Earth",
-    type: "planet",
+    category: "planet",
     diameterKm: 12742,
     massKg: 5.972e24,
     distanceFromSunKm: 149600000,
-    summary: "Earth is the third planet from the Sun and the only known planet with life."
+    orbitalPeriodDays: 365.25,
+    summary: "Earth is the third planet from the Sun and the only known astronomical object where life is known to exist."
   },
 
-  "mars": {
+  mars: {
     name: "Mars",
-    type: "planet",
+    category: "planet",
     diameterKm: 6779,
     massKg: 6.39e23,
     distanceFromSunKm: 227900000,
-    summary: "Mars is the fourth planet from the Sun and is often called the Red Planet."
+    orbitalPeriodDays: 687,
+    summary: "Mars is the fourth planet from the Sun. It is often called the Red Planet because of its reddish appearance."
   },
 
-  "jupiter": {
+  jupiter: {
     name: "Jupiter",
-    type: "planet",
+    category: "planet",
     diameterKm: 139820,
     massKg: 1.898e27,
     distanceFromSunKm: 778500000,
-    summary: "Jupiter is the largest planet in the Solar System."
+    orbitalPeriodDays: 4333,
+    summary: "Jupiter is the largest planet in the Solar System and is a gas giant."
   },
 
-  "saturn": {
+  saturn: {
     name: "Saturn",
-    type: "planet",
+    category: "planet",
     diameterKm: 116460,
     massKg: 5.683e26,
     distanceFromSunKm: 1434000000,
-    summary: "Saturn is a gas giant famous for its ring system."
+    orbitalPeriodDays: 10759,
+    summary: "Saturn is a gas giant known for its large and bright ring system."
   },
 
-  "mercury": {
+  mercury: {
     name: "Mercury",
-    type: "planet",
+    category: "planet",
     diameterKm: 4879,
     massKg: 3.285e23,
     distanceFromSunKm: 57900000,
-    summary: "Mercury is the smallest planet and the closest planet to the Sun."
+    orbitalPeriodDays: 88,
+    summary: "Mercury is the smallest planet in the Solar System and the closest planet to the Sun."
   },
 
-  "venus": {
+  venus: {
     name: "Venus",
-    type: "planet",
+    category: "planet",
     diameterKm: 12104,
     massKg: 4.867e24,
     distanceFromSunKm: 108200000,
-    summary: "Venus is the second planet from the Sun and has a very hot atmosphere."
+    orbitalPeriodDays: 225,
+    summary: "Venus is the second planet from the Sun and has a very hot, dense atmosphere."
   },
 
-  "uranus": {
+  uranus: {
     name: "Uranus",
-    type: "planet",
+    category: "planet",
     diameterKm: 50724,
     massKg: 8.681e25,
     distanceFromSunKm: 2871000000,
+    orbitalPeriodDays: 30687,
     summary: "Uranus is an ice giant planet known for rotating on its side."
   },
 
-  "neptune": {
+  neptune: {
     name: "Neptune",
-    type: "planet",
+    category: "planet",
     diameterKm: 49244,
     massKg: 1.024e26,
     distanceFromSunKm: 4495000000,
-    summary: "Neptune is the farthest known planet from the Sun."
+    orbitalPeriodDays: 60190,
+    summary: "Neptune is the farthest known planet from the Sun in the Solar System."
   },
 
-  "moon": {
+  moon: {
     name: "Moon",
-    type: "moon",
+    category: "moon",
     diameterKm: 3474,
     massKg: 7.342e22,
-    summary: "The Moon is Earth's natural satellite."
+    summary: "The Moon is Earth's only natural satellite."
   },
 
-  "sun": {
+  sun: {
     name: "Sun",
-    type: "star",
+    category: "star",
     diameterKm: 1392700,
     massKg: 1.989e30,
     summary: "The Sun is the star at the center of the Solar System."
@@ -160,7 +163,7 @@ const FACTS = {
 
   "bmw m4": {
     name: "BMW M4",
-    type: "car",
+    category: "car",
     topSpeedKmh: 290,
     zeroTo100Sec: 3.5,
     powerHp: 503,
@@ -169,7 +172,7 @@ const FACTS = {
 
   "bmw m5": {
     name: "BMW M5",
-    type: "car",
+    category: "car",
     topSpeedKmh: 305,
     zeroTo100Sec: 3.3,
     powerHp: 617,
@@ -178,7 +181,7 @@ const FACTS = {
 
   "bmw m4 cs": {
     name: "BMW M4 CS",
-    type: "car",
+    category: "car",
     topSpeedKmh: 302,
     zeroTo100Sec: 3.4,
     powerHp: 543,
@@ -187,7 +190,7 @@ const FACTS = {
 
   "mercedes amg gt black series": {
     name: "Mercedes-AMG GT Black Series",
-    type: "car",
+    category: "car",
     topSpeedKmh: 325,
     zeroTo100Sec: 3.2,
     powerHp: 720,
@@ -200,105 +203,141 @@ const FACTS = {
 
   "iphone 14": {
     name: "iPhone 14",
-    type: "phone",
+    category: "phone",
     releaseYear: 2022,
     summary: "The iPhone 14 is a smartphone released by Apple in 2022."
   },
 
   "iphone 15": {
     name: "iPhone 15",
-    type: "phone",
+    category: "phone",
     releaseYear: 2023,
     summary: "The iPhone 15 is a smartphone released by Apple in 2023."
   },
 
   "iphone 16": {
     name: "iPhone 16",
-    type: "phone",
+    category: "phone",
     releaseYear: 2024,
     summary: "The iPhone 16 is a smartphone released by Apple in 2024."
   },
 
-  "ps4": {
+  ps4: {
     aliasOf: "playstation 4"
+  },
+
+  ps5: {
+    aliasOf: "playstation 5"
   },
 
   "playstation 4": {
     name: "PlayStation 4",
-    type: "console",
+    category: "console",
     releaseYear: 2013,
     summary: "The PlayStation 4 is a video game console released by Sony in 2013."
   },
 
-  "ps5": {
-    aliasOf: "playstation 5"
-  },
-
   "playstation 5": {
     name: "PlayStation 5",
-    type: "console",
+    category: "console",
     releaseYear: 2020,
     summary: "The PlayStation 5 is a video game console released by Sony in 2020."
   }
 };
 
 
-// =====================================================
-// 4. HISTORY
-// =====================================================
+/* =====================================================
+   4. INIT
+   ===================================================== */
 
-let searchHistory = [];
+init();
 
-try {
-  const storedHistory = localStorage.getItem("arasSearchHistory");
+function init() {
+  loadSettings();
+  loadHistory();
+  bindEvents();
+  setupVoiceSearch();
+  updateSpeakButton();
+  renderHistory();
 
-  if (storedHistory) {
-    searchHistory = JSON.parse(storedHistory);
-  }
-} catch (error) {
-  searchHistory = [];
+  console.log("Aras Search loaded successfully.");
 }
 
-renderHistory();
-
-
-// =====================================================
-// 5. EVENT LISTENERS
-// =====================================================
-
-if (searchBtn) {
+function bindEvents() {
   searchBtn.addEventListener("click", search);
-}
 
-if (queryInput) {
-  queryInput.addEventListener("keydown", function (event) {
+  queryInput.addEventListener("keydown", event => {
     if (event.key === "Enter") {
       search();
     }
   });
+
+  chips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      queryInput.value = chip.dataset.query;
+      search();
+    });
+  });
+
+  speakToggleBtn.addEventListener("click", toggleSpeech);
 }
 
-suggestionButtons.forEach(function (button) {
-  button.addEventListener("click", function () {
-    queryInput.value = button.dataset.query;
-    search();
-  });
-});
+
+/* =====================================================
+   5. SETTINGS
+   ===================================================== */
+
+function loadSettings() {
+  speakEnabled = localStorage.getItem("arasSpeakEnabled") === "true";
+}
+
+function saveSettings() {
+  localStorage.setItem("arasSpeakEnabled", String(speakEnabled));
+}
+
+function toggleSpeech() {
+  speakEnabled = !speakEnabled;
+  saveSettings();
+  updateSpeakButton();
+
+  if (!speakEnabled) {
+    stopSpeaking();
+  } else if (lastSpokenText) {
+    speak("Voice answers are now on.");
+  }
+}
+
+function updateSpeakButton() {
+  if (!speakToggleBtn) return;
+
+  if (speakEnabled) {
+    speakToggleBtn.textContent = "🔊";
+    speakToggleBtn.classList.add("on");
+    speakToggleBtn.title = "Voice answers on";
+  } else {
+    speakToggleBtn.textContent = "🔇";
+    speakToggleBtn.classList.remove("on");
+    speakToggleBtn.title = "Voice answers off";
+  }
+}
 
 
-// =====================================================
-// 6. MAIN SEARCH
-// =====================================================
+/* =====================================================
+   6. MAIN SEARCH
+   ===================================================== */
 
 async function search() {
   const query = queryInput.value.trim();
 
   if (!query) {
-    showEmptyMessage();
+    showEmpty();
     return;
   }
 
-  saveSearch(query);
+  if (isSearching) return;
+
+  isSearching = true;
+  saveHistory(query);
   resetUI();
   showLoading("Understanding your question...");
 
@@ -310,18 +349,21 @@ async function search() {
     }
   } catch (error) {
     showError(error.message);
+  } finally {
+    isSearching = false;
+    searchBtn.disabled = false;
   }
 }
 
 
-// =====================================================
-// 7. NORMAL SEARCH
-// =====================================================
+/* =====================================================
+   7. NORMAL SEARCH
+   ===================================================== */
 
 async function handleNormalSearch(query) {
-  showLoading("Searching for the best answer...");
+  showLoading("Looking for a direct answer...");
 
-  const builtIn = answerFromBuiltInFacts(query);
+  const builtIn = getBuiltInAnswer(query);
 
   if (builtIn) {
     showNormalResult({
@@ -334,6 +376,8 @@ async function handleNormalSearch(query) {
 
     return;
   }
+
+  showLoading("Searching Wikipedia...");
 
   const wiki = await getBestWikipediaSummary(query);
 
@@ -360,18 +404,18 @@ async function handleNormalSearch(query) {
 }
 
 
-// =====================================================
-// 8. BUILT-IN DIRECT ANSWERS
-// =====================================================
+/* =====================================================
+   8. BUILT-IN ANSWERS
+   ===================================================== */
 
-function answerFromBuiltInFacts(query) {
+function getBuiltInAnswer(query) {
   const q = normalize(query);
 
   if (q.includes("value of pi") || q.includes("value of π")) {
     return {
       title: "Pi",
       direct: "π ≈ 3.14159",
-      text: "Pi is the ratio of a circle's circumference to its diameter. Its value starts with 3.14159 and continues forever."
+      text: "Pi is the ratio of a circle's circumference to its diameter. Its value begins with 3.14159 and continues forever."
     };
   }
 
@@ -380,6 +424,14 @@ function answerFromBuiltInFacts(query) {
       title: "Speed of light",
       direct: "299,792,458 metres per second",
       text: "The speed of light in vacuum is exactly 299,792,458 metres per second."
+    };
+  }
+
+  if (q.includes("speed of sound")) {
+    return {
+      title: "Speed of sound",
+      direct: "About 343 metres per second",
+      text: "The speed of sound in air at about 20°C is around 343 metres per second."
     };
   }
 
@@ -394,13 +446,23 @@ function answerFromBuiltInFacts(query) {
     };
   }
 
+  const fact = findFact(q);
+
+  if (fact && (q === normalize(fact.name) || q.includes("what is") || q.includes("who is"))) {
+    return {
+      title: fact.name,
+      direct: fact.name,
+      text: fact.summary || `${fact.name} is in the built-in fact database.`
+    };
+  }
+
   return null;
 }
 
 
-// =====================================================
-// 9. COMPARISON SEARCH
-// =====================================================
+/* =====================================================
+   9. COMPARISON HANDLING
+   ===================================================== */
 
 async function handleComparison(query) {
   showLoading("Detecting the two things to compare...");
@@ -412,24 +474,24 @@ async function handleComparison(query) {
     return;
   }
 
-  const rawItem1 = parts[0];
-  const rawItem2 = parts[1];
+  const itemA = parts[0];
+  const itemB = parts[1];
 
-  showLoading("Looking for comparison data...");
+  showLoading("Checking built-in comparison data...");
 
-  const fact1 = findFact(rawItem1);
-  const fact2 = findFact(rawItem2);
+  const factA = findFact(itemA);
+  const factB = findFact(itemB);
 
-  if (fact1 && fact2) {
-    const judgement = compareFacts(query, fact1, fact2);
+  if (factA && factB) {
+    const judgement = compareFacts(query, factA, factB);
 
     showComparisonResult({
-      item1Name: fact1.name,
-      item2Name: fact2.name,
-      item1Text: fact1.summary || "",
-      item2Text: fact2.summary || "",
       direct: judgement.direct,
-      explanation: judgement.explanation
+      explanation: judgement.explanation,
+      item1Name: factA.name,
+      item2Name: factB.name,
+      item1Text: factA.summary || "",
+      item2Text: factB.summary || ""
     });
 
     return;
@@ -437,18 +499,18 @@ async function handleComparison(query) {
 
   showLoading("Searching Wikipedia for both topics...");
 
-  const wiki1 = fact1 ? factToWikiLike(fact1) : await getBestWikipediaSummary(rawItem1);
-  const wiki2 = fact2 ? factToWikiLike(fact2) : await getBestWikipediaSummary(rawItem2);
+  const wikiA = factA ? factToWikiLike(factA) : await getBestWikipediaSummary(itemA);
+  const wikiB = factB ? factToWikiLike(factB) : await getBestWikipediaSummary(itemB);
 
-  const judgement = compareWikiResults(query, wiki1, wiki2);
+  const judgement = compareWikiResults(query, wikiA, wikiB);
 
   showComparisonResult({
-    item1Name: wiki1.title || rawItem1,
-    item2Name: wiki2.title || rawItem2,
-    item1Text: wiki1.extract || "No summary found.",
-    item2Text: wiki2.extract || "No summary found.",
     direct: judgement.direct,
-    explanation: judgement.explanation
+    explanation: judgement.explanation,
+    item1Name: wikiA.title || itemA,
+    item2Name: wikiB.title || itemB,
+    item1Text: wikiA.extract || "No summary found.",
+    item2Text: wikiB.extract || "No summary found."
   });
 }
 
@@ -472,13 +534,15 @@ function showComparisonResult(data) {
   compare2Text.textContent = data.item2Text;
 
   extraContent.innerHTML =
-    '<p class="small-note"><strong>Note:</strong> This app uses built-in facts when possible and Wikipedia as a fallback. It is not full AI, but it can make simple comparisons.</p>';
+    `<p class="small-note"><strong>Note:</strong> This app compares built-in data when possible and uses Wikipedia summaries as backup.</p>`;
+
+  speak(`${data.direct}. ${data.explanation}`);
 }
 
 
-// =====================================================
-// 10. SMART FACT COMPARISON
-// =====================================================
+/* =====================================================
+   10. COMPARISON LOGIC
+   ===================================================== */
 
 function compareFacts(query, a, b) {
   const intent = getComparisonIntent(query);
@@ -500,13 +564,15 @@ function compareFacts(query, a, b) {
   }
 
   if (intent === "faster") {
-    if (a.zeroTo100Sec !== undefined && b.zeroTo100Sec !== undefined) {
-      return compareByLower(a, b, "zeroTo100Sec", "seconds 0–100 km/h", "faster");
+    if (hasNumber(a.zeroTo100Sec) && hasNumber(b.zeroTo100Sec)) {
+      return compareByLower(a, b, "zeroTo100Sec", "seconds from 0 to 100 km/h", "faster");
     }
 
-    if (a.topSpeedKmh !== undefined && b.topSpeedKmh !== undefined) {
+    if (hasNumber(a.topSpeedKmh) && hasNumber(b.topSpeedKmh)) {
       return compareByHigher(a, b, "topSpeedKmh", "km/h top speed", "faster");
     }
+
+    return missingData(a, b, "faster");
   }
 
   if (intent === "morePowerful") {
@@ -525,23 +591,25 @@ function compareFacts(query, a, b) {
     return compareByHigher(a, b, "distanceFromSunKm", "km from the Sun", "farther from the Sun");
   }
 
+  if (intent === "closerToSun") {
+    return compareByLower(a, b, "distanceFromSunKm", "km from the Sun", "closer to the Sun");
+  }
+
   if (intent === "better") {
     return {
       direct: "It depends on what you mean by better.",
-      explanation:
-        `${a.name} and ${b.name} can be compared in different ways. Try asking something more specific, like faster, bigger, newer, or more powerful.`
+      explanation: `${a.name} and ${b.name} can be compared by speed, size, power, price, age, or purpose. Try asking a more specific comparison.`
     };
   }
 
   return {
     direct: `I found ${a.name} and ${b.name}, but I need a clearer comparison category.`,
-    explanation:
-      "Try using words like bigger, smaller, faster, older, newer, heavier, lighter, or more powerful."
+    explanation: "Try asking which is bigger, faster, older, newer, heavier, lighter, or more powerful."
   };
 }
 
 function compareByHigher(a, b, key, unit, word) {
-  if (a[key] === undefined || b[key] === undefined) {
+  if (!hasNumber(a[key]) || !hasNumber(b[key])) {
     return missingData(a, b, word);
   }
 
@@ -549,7 +617,7 @@ function compareByHigher(a, b, key, unit, word) {
 }
 
 function compareByLower(a, b, key, unit, word) {
-  if (a[key] === undefined || b[key] === undefined) {
+  if (!hasNumber(a[key]) || !hasNumber(b[key])) {
     return missingData(a, b, word);
   }
 
@@ -557,175 +625,128 @@ function compareByLower(a, b, key, unit, word) {
 }
 
 function compareNumbers(a, b, valueA, valueB, unit, word, direction) {
+  if (valueA === valueB) {
+    return {
+      direct: `${a.name} and ${b.name} are equal.`,
+      explanation: `Both have the same value: ${formatNumber(valueA)} ${unit}.`
+    };
+  }
+
   let winner;
   let loser;
   let winnerValue;
   let loserValue;
 
   if (direction === "higher") {
-    if (valueA > valueB) {
-      winner = a;
-      loser = b;
-      winnerValue = valueA;
-      loserValue = valueB;
-    } else if (valueB > valueA) {
-      winner = b;
-      loser = a;
-      winnerValue = valueB;
-      loserValue = valueA;
-    } else {
-      return {
-        direct: `${a.name} and ${b.name} are equal.`,
-        explanation: `Both have the same value: ${formatNumber(valueA)} ${unit}.`
-      };
-    }
-  }
-
-  if (direction === "lower") {
-    if (valueA < valueB) {
-      winner = a;
-      loser = b;
-      winnerValue = valueA;
-      loserValue = valueB;
-    } else if (valueB < valueA) {
-      winner = b;
-      loser = a;
-      winnerValue = valueB;
-      loserValue = valueA;
-    } else {
-      return {
-        direct: `${a.name} and ${b.name} are equal.`,
-        explanation: `Both have the same value: ${formatNumber(valueA)} ${unit}.`
-      };
-    }
+    winner = valueA > valueB ? a : b;
+    loser = valueA > valueB ? b : a;
+    winnerValue = valueA > valueB ? valueA : valueB;
+    loserValue = valueA > valueB ? valueB : valueA;
+  } else {
+    winner = valueA < valueB ? a : b;
+    loser = valueA < valueB ? b : a;
+    winnerValue = valueA < valueB ? valueA : valueB;
+    loserValue = valueA < valueB ? valueB : valueA;
   }
 
   return {
     direct: `${winner.name} is ${word} than ${loser.name}.`,
-    explanation:
-      `${winner.name} wins because it has ${formatNumber(winnerValue)} ${unit}, while ${loser.name} has ${formatNumber(loserValue)} ${unit}.`
+    explanation: `${winner.name} wins because it has ${formatNumber(winnerValue)} ${unit}, while ${loser.name} has ${formatNumber(loserValue)} ${unit}.`
   };
 }
 
 function missingData(a, b, word) {
   return {
     direct: `I cannot confidently decide which is ${word}.`,
-    explanation:
-      `I found ${a.name} and ${b.name}, but I do not have the exact data needed for this comparison.`
+    explanation: `I found ${a.name} and ${b.name}, but I do not have the exact data needed for this comparison.`
   };
 }
 
 
-// =====================================================
-// 11. WIKIPEDIA FALLBACK COMPARISON
-// =====================================================
+/* =====================================================
+   11. WIKIPEDIA COMPARISON FALLBACK
+   ===================================================== */
 
-function compareWikiResults(query, wiki1, wiki2) {
+function compareWikiResults(query, wikiA, wikiB) {
   const intent = getComparisonIntent(query);
 
-  const name1 = wiki1.title || "First option";
-  const name2 = wiki2.title || "Second option";
+  const nameA = wikiA.title || "First option";
+  const nameB = wikiB.title || "Second option";
 
-  const text1 = wiki1.extract || "";
-  const text2 = wiki2.extract || "";
+  const textA = wikiA.extract || "";
+  const textB = wikiB.extract || "";
 
   if (intent === "older" || intent === "newer") {
-    const y1 = extractYear(text1);
-    const y2 = extractYear(text2);
+    const yearA = extractYear(textA);
+    const yearB = extractYear(textB);
 
-    if (y1 && y2) {
+    if (yearA && yearB) {
       if (intent === "older") {
-        if (y1 < y2) {
-          return {
-            direct: `${name1} is older than ${name2}.`,
-            explanation: `${name1} is linked to ${y1}, while ${name2} is linked to ${y2}.`
-          };
-        }
-
-        return {
-          direct: `${name2} is older than ${name1}.`,
-          explanation: `${name2} is linked to ${y2}, while ${name1} is linked to ${y1}.`
-        };
+        return yearA < yearB
+          ? {
+              direct: `${nameA} is older than ${nameB}.`,
+              explanation: `${nameA} is linked to ${yearA}, while ${nameB} is linked to ${yearB}.`
+            }
+          : {
+              direct: `${nameB} is older than ${nameA}.`,
+              explanation: `${nameB} is linked to ${yearB}, while ${nameA} is linked to ${yearA}.`
+            };
       }
 
-      if (intent === "newer") {
-        if (y1 > y2) {
-          return {
-            direct: `${name1} is newer than ${name2}.`,
-            explanation: `${name1} is linked to ${y1}, while ${name2} is linked to ${y2}.`
+      return yearA > yearB
+        ? {
+            direct: `${nameA} is newer than ${nameB}.`,
+            explanation: `${nameA} is linked to ${yearA}, while ${nameB} is linked to ${yearB}.`
+          }
+        : {
+            direct: `${nameB} is newer than ${nameA}.`,
+            explanation: `${nameB} is linked to ${yearB}, while ${nameA} is linked to ${yearA}.`
           };
-        }
-
-        return {
-          direct: `${name2} is newer than ${name1}.`,
-          explanation: `${name2} is linked to ${y2}, while ${name1} is linked to ${y1}.`
-        };
-      }
     }
   }
 
-  if (
-    intent === "bigger" ||
-    intent === "smaller" ||
-    intent === "faster" ||
-    intent === "heavier" ||
-    intent === "lighter" ||
-    intent === "morePowerful"
-  ) {
-    const n1 = extractUsefulNumber(text1);
-    const n2 = extractUsefulNumber(text2);
+  const numberA = extractUsefulNumber(textA);
+  const numberB = extractUsefulNumber(textB);
 
-    if (n1 !== null && n2 !== null) {
-      const higherWins =
-        intent === "bigger" ||
-        intent === "faster" ||
-        intent === "heavier" ||
-        intent === "morePowerful";
+  if (numberA !== null && numberB !== null) {
+    const higherWins = ["bigger", "heavier", "faster", "morePowerful"].includes(intent);
+    const lowerWins = ["smaller", "lighter"].includes(intent);
 
-      const lowerWins = intent === "smaller" || intent === "lighter";
-
-      if (higherWins) {
-        if (n1 > n2) {
-          return {
-            direct: `${name1} is probably ${intentToWord(intent)} than ${name2}.`,
-            explanation: `${name1} has the higher detected number: ${n1}, compared with ${name2}: ${n2}.`
+    if (higherWins) {
+      return numberA > numberB
+        ? {
+            direct: `${nameA} is probably ${intentToWord(intent)} than ${nameB}.`,
+            explanation: `${nameA} has the higher detected number: ${numberA}, while ${nameB} has ${numberB}.`
+          }
+        : {
+            direct: `${nameB} is probably ${intentToWord(intent)} than ${nameA}.`,
+            explanation: `${nameB} has the higher detected number: ${numberB}, while ${nameA} has ${numberA}.`
           };
-        }
+    }
 
-        return {
-          direct: `${name2} is probably ${intentToWord(intent)} than ${name1}.`,
-          explanation: `${name2} has the higher detected number: ${n2}, compared with ${name1}: ${n1}.`
-        };
-      }
-
-      if (lowerWins) {
-        if (n1 < n2) {
-          return {
-            direct: `${name1} is probably ${intentToWord(intent)} than ${name2}.`,
-            explanation: `${name1} has the lower detected number: ${n1}, compared with ${name2}: ${n2}.`
+    if (lowerWins) {
+      return numberA < numberB
+        ? {
+            direct: `${nameA} is probably ${intentToWord(intent)} than ${nameB}.`,
+            explanation: `${nameA} has the lower detected number: ${numberA}, while ${nameB} has ${numberB}.`
+          }
+        : {
+            direct: `${nameB} is probably ${intentToWord(intent)} than ${nameA}.`,
+            explanation: `${nameB} has the lower detected number: ${numberB}, while ${nameA} has ${numberA}.`
           };
-        }
-
-        return {
-          direct: `${name2} is probably ${intentToWord(intent)} than ${name1}.`,
-          explanation: `${name2} has the lower detected number: ${n2}, compared with ${name1}: ${n1}.`
-        };
-      }
     }
   }
 
   if (intent === "better") {
     return {
       direct: "It depends on what you mean by better.",
-      explanation:
-        `${name1} and ${name2} can be compared in many ways. Try asking which is faster, bigger, newer, cheaper, or more powerful.`
+      explanation: `${nameA} and ${nameB} can be compared in many different ways. Try asking a more specific question.`
     };
   }
 
   return {
     direct: "I found both topics, but I cannot confidently choose a winner.",
-    explanation:
-      `I found information about ${name1} and ${name2}, but not enough structured data to make a direct judgement.`
+    explanation: `I found information about ${nameA} and ${nameB}, but not enough structured data to make a direct judgement.`
   };
 }
 
@@ -735,9 +756,9 @@ function intentToWord(intent) {
 }
 
 
-// =====================================================
-// 12. INTENT DETECTION
-// =====================================================
+/* =====================================================
+   12. INTENT DETECTION
+   ===================================================== */
 
 function getComparisonIntent(query) {
   const q = normalize(query);
@@ -750,11 +771,11 @@ function getComparisonIntent(query) {
     return "smaller";
   }
 
-  if (q.includes("heavier") || q.includes("more massive")) {
+  if (q.includes("heavier") || q.includes("more massive") || q.includes("weighs more")) {
     return "heavier";
   }
 
-  if (q.includes("lighter")) {
+  if (q.includes("lighter") || q.includes("weighs less")) {
     return "lighter";
   }
 
@@ -762,7 +783,7 @@ function getComparisonIntent(query) {
     return "faster";
   }
 
-  if (q.includes("more powerful") || q.includes("stronger") || q.includes("more horsepower")) {
+  if (q.includes("more powerful") || q.includes("stronger") || q.includes("horsepower")) {
     return "morePowerful";
   }
 
@@ -778,6 +799,10 @@ function getComparisonIntent(query) {
     return "fartherFromSun";
   }
 
+  if (q.includes("closer to the sun")) {
+    return "closerToSun";
+  }
+
   if (q.includes("better")) {
     return "better";
   }
@@ -786,9 +811,9 @@ function getComparisonIntent(query) {
 }
 
 
-// =====================================================
-// 13. FACT FINDING
-// =====================================================
+/* =====================================================
+   13. FACT HELPERS
+   ===================================================== */
 
 function findFact(text) {
   const q = normalize(text);
@@ -797,22 +822,17 @@ function findFact(text) {
     return resolveFact(FACTS[q]);
   }
 
-  const keys = Object.keys(FACTS);
   let bestKey = "";
 
-  for (const key of keys) {
+  Object.keys(FACTS).forEach(key => {
     if (q.includes(key) || key.includes(q)) {
       if (key.length > bestKey.length) {
         bestKey = key;
       }
     }
-  }
+  });
 
-  if (bestKey) {
-    return resolveFact(FACTS[bestKey]);
-  }
-
-  return null;
+  return bestKey ? resolveFact(FACTS[bestKey]) : null;
 }
 
 function resolveFact(fact) {
@@ -832,9 +852,9 @@ function factToWikiLike(fact) {
 }
 
 
-// =====================================================
-// 14. COMPARISON QUESTION SPLITTING
-// =====================================================
+/* =====================================================
+   14. COMPARISON QUESTION SPLITTING
+   ===================================================== */
 
 function isComparisonQuestion(query) {
   const q = normalize(query);
@@ -842,8 +862,8 @@ function isComparisonQuestion(query) {
   return (
     q.includes(" vs ") ||
     q.includes(" versus ") ||
-    q.includes(" compare ") ||
     q.startsWith("compare ") ||
+    q.includes(" compare ") ||
     q.includes("which is") ||
     q.includes("which one") ||
     q.includes(" or ")
@@ -851,7 +871,7 @@ function isComparisonQuestion(query) {
 }
 
 function splitComparisonQuestion(query) {
-  let cleaned = " " + query + " ";
+  let cleaned = ` ${query} `;
 
   cleaned = cleaned
     .replace(/\?/g, " ")
@@ -880,12 +900,8 @@ function splitComparisonQuestion(query) {
 
   const parts = cleaned
     .split(/\s+vs\s+|\s+versus\s+|\s+or\s+|\s+and\s+/i)
-    .map(function (part) {
-      return part.trim();
-    })
-    .filter(function (part) {
-      return part.length > 1;
-    });
+    .map(part => part.trim())
+    .filter(part => part.length > 1);
 
   if (parts.length >= 2) {
     return [parts[0], parts[1]];
@@ -895,9 +911,9 @@ function splitComparisonQuestion(query) {
 }
 
 
-// =====================================================
-// 15. WIKIPEDIA API
-// =====================================================
+/* =====================================================
+   15. WIKIPEDIA
+   ===================================================== */
 
 async function getWikipediaSearchResults(query) {
   const url =
@@ -906,34 +922,42 @@ async function getWikipediaSearchResults(query) {
     "&format=json&origin=*";
 
   const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Wikipedia search failed.");
+  }
+
   const data = await response.json();
 
   if (!data.query || !data.query.search) {
     return [];
   }
 
-  return data.query.search.map(function (item) {
-    return {
-      title: item.title,
-      snippet: stripHTML(item.snippet)
-    };
-  });
+  return data.query.search.map(item => ({
+    title: item.title,
+    snippet: stripHTML(item.snippet)
+  }));
 }
 
 async function getBestWikipediaSummary(query) {
-  const searchResults = await getWikipediaSearchResults(query);
+  const results = await getWikipediaSearchResults(query);
 
-  if (!searchResults.length) {
+  if (!results.length) {
     return {};
   }
 
-  const bestTitle = searchResults[0].title;
+  const bestTitle = results[0].title;
 
   const summaryUrl =
     "https://en.wikipedia.org/api/rest_v1/page/summary/" +
     encodeURIComponent(bestTitle);
 
   const response = await fetch(summaryUrl);
+
+  if (!response.ok) {
+    throw new Error("Wikipedia summary failed.");
+  }
+
   const data = await response.json();
 
   return {
@@ -949,9 +973,9 @@ async function getBestWikipediaSummary(query) {
 }
 
 
-// =====================================================
-// 16. DIRECT ANSWER EXTRACTION
-// =====================================================
+/* =====================================================
+   16. DIRECT ANSWERS
+   ===================================================== */
 
 function extractDirectAnswer(query, text, title) {
   const q = normalize(query);
@@ -966,27 +990,21 @@ function extractDirectAnswer(query, text, title) {
       direct = date;
       highlightedText = highlightPhrase(text, date);
     }
-  }
-
-  else if (q.includes("how many") || q.includes("how much") || q.includes("population")) {
+  } else if (q.includes("how many") || q.includes("how much") || q.includes("population")) {
     const number = extractUsefulNumber(text);
 
     if (number !== null) {
       direct = String(number);
       highlightedText = highlightPhrase(text, String(number));
     }
-  }
-
-  else if (q.includes("where")) {
+  } else if (q.includes("where")) {
     const place = extractPlace(text);
 
     if (place) {
       direct = place;
       highlightedText = highlightPhrase(text, place);
     }
-  }
-
-  else if (q.includes("who is") || q.includes("what is")) {
+  } else if (q.includes("who is") || q.includes("what is")) {
     direct = title;
   }
 
@@ -1001,25 +1019,15 @@ function extractDate(text) {
     /\b\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/i
   );
 
-  if (fullDate) {
-    return fullDate[0];
-  }
+  if (fullDate) return fullDate[0];
 
   const year = extractYear(text);
-
-  if (year) {
-    return String(year);
-  }
-
-  return "";
+  return year ? String(year) : "";
 }
 
 function extractYear(text) {
   const match = text.match(/\b(1[0-9]{3}|20[0-9]{2})\b/);
-
-  if (!match) return null;
-
-  return Number(match[0]);
+  return match ? Number(match[0]) : null;
 }
 
 function extractUsefulNumber(text) {
@@ -1028,16 +1036,10 @@ function extractUsefulNumber(text) {
   if (!matches) return null;
 
   const numbers = matches
-    .map(function (num) {
-      return Number(num.replace(/,/g, ""));
-    })
-    .filter(function (num) {
-      return !Number.isNaN(num);
-    });
+    .map(num => Number(num.replace(/,/g, "")))
+    .filter(num => !Number.isNaN(num));
 
-  if (!numbers.length) return null;
-
-  return numbers[0];
+  return numbers.length ? numbers[0] : null;
 }
 
 function extractPlace(text) {
@@ -1045,15 +1047,13 @@ function extractPlace(text) {
     /\b(in|at|from|near)\s+([A-Z][a-zA-ZÀ-ÿ]+(?:\s+[A-Z][a-zA-ZÀ-ÿ]+){0,4})/
   );
 
-  if (!match) return "";
-
-  return match[0];
+  return match ? match[0] : "";
 }
 
 
-// =====================================================
-// 17. SHOW NORMAL RESULT
-// =====================================================
+/* =====================================================
+   17. DISPLAY NORMAL RESULT
+   ===================================================== */
 
 function showNormalResult(data) {
   stopLoading("Answer found");
@@ -1078,16 +1078,16 @@ function showNormalResult(data) {
 
   if (data.sourceUrl) {
     extraContent.innerHTML =
-      '<a class="source-link" href="' +
-      data.sourceUrl +
-      '" target="_blank">Open source →</a>';
+      `<a class="source-link" href="${data.sourceUrl}" target="_blank">Open source →</a>`;
   }
+
+  speak(`${data.direct ? data.direct + ". " : ""}${stripHTML(data.text)}`);
 }
 
 
-// =====================================================
-// 18. RELATED RESULTS
-// =====================================================
+/* =====================================================
+   18. RELATED RESULTS
+   ===================================================== */
 
 function showRelatedResults(results) {
   if (!results || !results.length) return;
@@ -1095,7 +1095,7 @@ function showRelatedResults(results) {
   relatedSection.classList.remove("hidden");
   relatedList.innerHTML = "";
 
-  results.forEach(function (item) {
+  results.forEach(item => {
     const card = document.createElement("div");
     card.className = "related-item";
 
@@ -1108,7 +1108,7 @@ function showRelatedResults(results) {
     card.appendChild(title);
     card.appendChild(snippet);
 
-    card.addEventListener("click", function () {
+    card.addEventListener("click", () => {
       queryInput.value = item.title;
       search();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1119,24 +1119,27 @@ function showRelatedResults(results) {
 }
 
 
-// =====================================================
-// 19. SEARCH HISTORY
-// =====================================================
+/* =====================================================
+   19. HISTORY
+   ===================================================== */
 
-function saveSearch(query) {
-  searchHistory = searchHistory.filter(function (item) {
-    return normalize(item) !== normalize(query);
-  });
+function loadHistory() {
+  try {
+    searchHistory = JSON.parse(localStorage.getItem("arasSearchHistory") || "[]");
+  } catch {
+    searchHistory = [];
+  }
+}
 
+function saveHistory(query) {
+  searchHistory = searchHistory.filter(item => normalize(item) !== normalize(query));
   searchHistory.unshift(query);
 
   if (searchHistory.length > 8) {
     searchHistory.pop();
   }
 
-  try {
-    localStorage.setItem("arasSearchHistory", JSON.stringify(searchHistory));
-  } catch (error) {}
+  localStorage.setItem("arasSearchHistory", JSON.stringify(searchHistory));
 
   renderHistory();
 }
@@ -1153,12 +1156,12 @@ function renderHistory() {
 
   historySection.classList.remove("hidden");
 
-  searchHistory.forEach(function (item) {
+  searchHistory.forEach(item => {
     const button = document.createElement("button");
     button.className = "history-item";
     button.textContent = item;
 
-    button.addEventListener("click", function () {
+    button.addEventListener("click", () => {
       queryInput.value = item;
       search();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1169,9 +1172,98 @@ function renderHistory() {
 }
 
 
-// =====================================================
-// 20. UI HELPERS
-// =====================================================
+/* =====================================================
+   20. VOICE INPUT
+   ===================================================== */
+
+function setupVoiceSearch() {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition || !voiceBtn) {
+    if (voiceBtn) voiceBtn.style.display = "none";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "en-US";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  voiceBtn.addEventListener("click", () => {
+    try {
+      recognition.start();
+      voiceBtn.classList.add("listening");
+      voiceBtn.textContent = "🎙️";
+      resultSection.classList.remove("hidden");
+      loader.style.display = "block";
+      statusText.textContent = "Listening...";
+    } catch {
+      statusText.textContent = "Voice search is already listening.";
+    }
+  });
+
+  recognition.onresult = event => {
+    const transcript = event.results[0][0].transcript;
+    queryInput.value = transcript;
+    voiceBtn.classList.remove("listening");
+    voiceBtn.textContent = "🎤";
+    search();
+  };
+
+  recognition.onerror = () => {
+    voiceBtn.classList.remove("listening");
+    voiceBtn.textContent = "🎤";
+    loader.style.display = "none";
+    statusText.textContent = "Voice search failed. Try again.";
+  };
+
+  recognition.onend = () => {
+    voiceBtn.classList.remove("listening");
+    voiceBtn.textContent = "🎤";
+  };
+}
+
+
+/* =====================================================
+   21. VOICE OUTPUT
+   ===================================================== */
+
+function speak(text) {
+  if (!speakEnabled) return;
+  if (!("speechSynthesis" in window)) return;
+
+  const clean = String(text)
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!clean) return;
+
+  lastSpokenText = clean;
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(clean);
+
+  utterance.lang = "en-US";
+  utterance.rate = 1;
+  utterance.pitch = 1;
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+
+/* =====================================================
+   22. UI HELPERS
+   ===================================================== */
 
 function resetUI() {
   resultSection.classList.add("hidden");
@@ -1184,7 +1276,6 @@ function resetUI() {
   answerTitle.textContent = "";
   answerText.textContent = "";
   directAnswer.textContent = "";
-
   directAnswerBox.classList.add("hidden");
 
   extraContent.innerHTML = "";
@@ -1209,9 +1300,8 @@ function stopLoading(message) {
   searchBtn.disabled = false;
 }
 
-function showEmptyMessage() {
+function showEmpty() {
   resetUI();
-
   resultSection.classList.remove("hidden");
   loader.style.display = "none";
   statusText.textContent = "No search entered";
@@ -1221,28 +1311,21 @@ function showEmptyMessage() {
 
 function showNoResult(query) {
   stopLoading("No result found");
-
   resultSection.classList.remove("hidden");
   answerTitle.textContent = "No result";
-  answerText.textContent =
-    "I could not find a good result for: " +
-    query +
-    ". Try using more specific words.";
+  answerText.textContent = `I could not find a good result for: ${query}. Try using more specific words.`;
 }
 
 function showComparisonHelp() {
   stopLoading("Comparison detected");
-
   resultSection.classList.remove("hidden");
   answerTitle.textContent = "I need two clear things";
-  answerText.textContent =
-    "Try writing your comparison like: Earth vs Mars, BMW M4 vs BMW M5, or iPhone 15 vs iPhone 14.";
+  answerText.textContent = "Try writing your comparison like: Earth vs Mars, BMW M4 vs BMW M5, or iPhone 15 vs iPhone 14.";
 }
 
 function showError(message) {
   loader.style.display = "none";
   searchBtn.disabled = false;
-
   resultSection.classList.remove("hidden");
   statusText.textContent = "Error";
   answerTitle.textContent = "Something went wrong";
@@ -1250,68 +1333,9 @@ function showError(message) {
 }
 
 
-// =====================================================
-// 21. VOICE SEARCH
-// =====================================================
-
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-
-if (SpeechRecognition && voiceBtn) {
-  const recognition = new SpeechRecognition();
-
-  recognition.lang = "en-US";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  voiceBtn.addEventListener("click", function () {
-    try {
-      recognition.start();
-
-      voiceBtn.classList.add("listening");
-      voiceBtn.textContent = "🎙️";
-
-      resultSection.classList.remove("hidden");
-      loader.style.display = "block";
-      statusText.textContent = "Listening...";
-    } catch (error) {
-      statusText.textContent = "Voice search is already listening.";
-    }
-  });
-
-  recognition.onresult = function (event) {
-    const transcript = event.results[0][0].transcript;
-
-    queryInput.value = transcript;
-
-    voiceBtn.classList.remove("listening");
-    voiceBtn.textContent = "🎤";
-
-    search();
-  };
-
-  recognition.onerror = function () {
-    voiceBtn.classList.remove("listening");
-    voiceBtn.textContent = "🎤";
-
-    loader.style.display = "none";
-    statusText.textContent = "Voice search failed. Try again.";
-  };
-
-  recognition.onend = function () {
-    voiceBtn.classList.remove("listening");
-    voiceBtn.textContent = "🎤";
-  };
-} else {
-  if (voiceBtn) {
-    voiceBtn.style.display = "none";
-  }
-}
-
-
-// =====================================================
-// 22. TEXT HELPERS
-// =====================================================
+/* =====================================================
+   23. TEXT HELPERS
+   ===================================================== */
 
 function normalize(text) {
   return String(text)
@@ -1342,13 +1366,17 @@ function highlightPhrase(text, phrase) {
   const safeText = escapeHTML(text);
   const safePhrase = escapeRegExp(escapeHTML(phrase));
 
-  const regex = new RegExp("(" + safePhrase + ")", "i");
+  const regex = new RegExp(`(${safePhrase})`, "i");
 
   return safeText.replace(regex, "<mark>$1</mark>");
 }
 
 function escapeRegExp(text) {
   return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasNumber(value) {
+  return typeof value === "number" && !Number.isNaN(value);
 }
 
 function formatNumber(num) {
@@ -1360,10 +1388,3 @@ function formatNumber(num) {
 
   return num.toLocaleString();
 }
-
-
-// =====================================================
-// 23. STARTUP
-// =====================================================
-
-console.log("Aras Smart Search loaded with voice search.");
