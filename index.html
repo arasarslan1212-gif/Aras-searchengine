@@ -1,206 +1,368 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Basic setup -->
+
+  <!-- ================================================
+       META & SETUP
+  ================================================ -->
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Aras Search — a smart, sleek search engine powered by Wikipedia. Search facts, compare topics, use voice input, and hear answers out loud." />
+  <meta name="theme-color" content="#05050a" />
 
-  <!-- Page title -->
   <title>Aras Search</title>
 
-  <!-- CSS file -->
   <link rel="stylesheet" href="style.css" />
+
 </head>
 
 <body>
-  <!-- Background decoration -->
-  <div class="background">
+
+  <!-- ================================================
+       BACKGROUND DECORATION
+       Animated glowing blobs and the grid overlay.
+  ================================================ -->
+
+  <div class="background" aria-hidden="true">
     <div class="glow glow-one"></div>
     <div class="glow glow-two"></div>
     <div class="glow glow-three"></div>
-    <div class="grid-overlay"></div>
+    <div class="glow glow-four"></div>
   </div>
 
-  <!-- Main app container -->
-  <main class="app">
 
-    <!-- Header / Hero -->
+  <!-- ================================================
+       MAIN APP SHELL
+  ================================================ -->
+
+  <main class="app" role="main">
+
+
+    <!-- ============================================
+         HEADER / HERO
+    ============================================ -->
+
     <header class="hero">
-      <div class="top-badge">
-        <span class="badge-dot"></span>
-        No API key needed
+
+      <div class="top-badge" role="status">
+        <span class="badge-dot" aria-hidden="true"></span>
+        Free · No account needed
       </div>
 
-      <h1>
-        Aras
-        <span>Search</span>
+      <h1 class="hero-title">
+        Aras<span class="hero-title-accent"> Search</span>
       </h1>
 
       <p class="hero-subtitle">
-        A sleek smart search engine that can answer questions, compare topics,
-        use voice search, and read answers out loud when you want.
+        A smart search engine that finds facts, compares topics,
+        understands voice, and can read answers out loud.
       </p>
+
+      <!-- Quick stat pills below the subtitle -->
+      <div class="hero-stats" aria-label="Key features">
+        <span class="stat-pill">
+          <span class="stat-dot stat-blue" aria-hidden="true"></span>
+          Wikipedia-powered
+        </span>
+        <span class="stat-pill">
+          <span class="stat-dot stat-cyan" aria-hidden="true"></span>
+          Built-in fact database
+        </span>
+        <span class="stat-pill">
+          <span class="stat-dot stat-purple" aria-hidden="true"></span>
+          Smart comparisons
+        </span>
+        <span class="stat-pill">
+          <span class="stat-dot stat-pink" aria-hidden="true"></span>
+          Voice input & output
+        </span>
+      </div>
+
     </header>
 
-    <!-- Search panel -->
-    <section class="search-panel">
+
+    <!-- ============================================
+         SEARCH PANEL
+    ============================================ -->
+
+    <section class="search-panel" aria-label="Search">
+
+      <!-- Main search row -->
       <div class="search-row">
+
         <div class="input-wrap">
-          <span class="input-icon">⌕</span>
+          <span class="input-icon" aria-hidden="true">⌕</span>
 
           <input
             id="query"
-            type="text"
-            placeholder="Ask anything... for example: Which is bigger Earth or Mars?"
+            type="search"
+            placeholder="Ask anything… e.g. Which is bigger, Earth or Mars?"
             autocomplete="off"
+            spellcheck="true"
+            aria-label="Search query"
           />
+
+          <!-- Clear button inside the input -->
+          <button
+            id="clearBtn"
+            class="clear-button hidden"
+            title="Clear search"
+            aria-label="Clear search input"
+          >
+            ✕
+          </button>
         </div>
 
-        <button id="searchBtn" class="main-button">
+        <button
+          id="searchBtn"
+          class="main-button"
+          aria-label="Search"
+        >
           Search
         </button>
 
-        <button id="voiceBtn" class="icon-button" title="Voice search">
+        <button
+          id="voiceBtn"
+          class="icon-button"
+          title="Voice search"
+          aria-label="Start voice search"
+        >
           🎤
         </button>
 
-        <button id="speakToggleBtn" class="icon-button" title="Turn voice answers on or off">
+        <button
+          id="speakToggleBtn"
+          class="icon-button"
+          title="Toggle voice answers"
+          aria-label="Toggle voice answers off"
+        >
           🔇
         </button>
+
       </div>
 
       <!-- Suggestion chips -->
-      <div class="chips">
-        <button class="chip" data-query="When was Atatürk born?">
+      <div class="chips" role="list" aria-label="Suggested searches">
+
+        <button class="chip" role="listitem" data-query="When was Atatürk born?">
           Atatürk birth
         </button>
 
-        <button class="chip" data-query="Which is bigger Earth or Mars?">
+        <button class="chip" role="listitem" data-query="Which is bigger Earth or Mars?">
           Earth vs Mars
         </button>
 
-        <button class="chip" data-query="Which is faster BMW M4 or BMW M5?">
+        <button class="chip" role="listitem" data-query="Which is faster BMW M4 or BMW M5?">
           BMW M4 vs M5
         </button>
 
-        <button class="chip" data-query="What is the value of pi?">
+        <button class="chip" role="listitem" data-query="What is the value of pi?">
           Value of π
         </button>
 
-        <button class="chip" data-query="Speed of light">
+        <button class="chip" role="listitem" data-query="Speed of light">
           Speed of light
         </button>
 
-        <button class="chip" data-query="Which is newer iPhone 15 or iPhone 14?">
-          iPhone 15 vs 14
+        <button class="chip" role="listitem" data-query="Which is newer iPhone 15 or iPhone 16?">
+          iPhone 15 vs 16
         </button>
+
+        <button class="chip" role="listitem" data-query="How far is the Moon from Earth?">
+          Moon distance
+        </button>
+
+        <button class="chip" role="listitem" data-query="Which is bigger Jupiter or Saturn?">
+          Jupiter vs Saturn
+        </button>
+
       </div>
+
     </section>
 
-    <!-- Result section -->
-    <section id="result" class="result-section hidden">
-      <div class="status-row">
-        <span id="loader" class="loader"></span>
-        <span id="statusText">Searching...</span>
+
+    <!-- ============================================
+         RESULT SECTION
+         Shown after a successful search.
+    ============================================ -->
+
+    <section id="result" class="result-section hidden" aria-live="polite" aria-label="Search result">
+
+      <!-- Status bar (loader + message) -->
+      <div class="status-row" role="status">
+        <span id="loader" class="loader hidden" aria-hidden="true"></span>
+        <span id="statusText" class="status-text"></span>
       </div>
 
-      <article class="answer-card">
+      <!-- Main answer card -->
+      <article class="answer-card" aria-label="Answer">
+
         <div class="answer-top">
           <p class="section-label">Best answer</p>
-          <h2 id="answerTitle">Result</h2>
+          <h2 id="answerTitle" class="answer-title"></h2>
         </div>
 
-        <div id="directAnswerBox" class="direct-answer hidden">
-          <p>Direct answer</p>
-          <strong id="directAnswer"></strong>
+        <!-- Direct answer highlight box -->
+        <div id="directAnswerBox" class="direct-answer hidden" aria-label="Direct answer">
+          <p class="direct-label">Direct answer</p>
+          <strong id="directAnswer" class="direct-value"></strong>
         </div>
 
+        <!-- Full answer text -->
         <p id="answerText" class="answer-text"></p>
 
+        <!-- Extra content: source link, notes -->
         <div id="extraContent" class="extra-content"></div>
+
       </article>
+
     </section>
 
-    <!-- Comparison section -->
-    <section id="comparison" class="comparison-section hidden">
-      <article class="compare-card">
+
+    <!-- ============================================
+         COMPARISON SECTION
+         Shown when comparing two things.
+    ============================================ -->
+
+    <section id="comparison" class="comparison-section hidden" aria-label="Comparison">
+
+      <article class="compare-card" aria-label="First item">
         <p class="section-label">First topic</p>
-        <h3 id="compare1Title"></h3>
-        <p id="compare1Text"></p>
+        <h3 id="compare1Title" class="compare-title"></h3>
+        <p id="compare1Text" class="compare-text"></p>
       </article>
 
-      <article class="compare-card">
+      <article class="compare-card" aria-label="Second item">
         <p class="section-label">Second topic</p>
-        <h3 id="compare2Title"></h3>
-        <p id="compare2Text"></p>
+        <h3 id="compare2Title" class="compare-title"></h3>
+        <p id="compare2Text" class="compare-text"></p>
       </article>
+
     </section>
 
-    <!-- Related results -->
-    <section id="related" class="related-section hidden">
+
+    <!-- ============================================
+         RELATED RESULTS
+         Shown after a Wikipedia search.
+    ============================================ -->
+
+    <section id="related" class="related-section hidden" aria-label="Related results">
+
       <div class="section-heading">
         <h2>Related results</h2>
-        <p>Click a result to search it directly.</p>
+        <p>Click any result to search it directly.</p>
       </div>
 
-      <div id="relatedList" class="related-list"></div>
+      <div id="relatedList" class="related-list" role="list"></div>
+
     </section>
 
-    <!-- Search history -->
-    <section id="history" class="history-section hidden">
+
+    <!-- ============================================
+         SEARCH HISTORY
+         Stored in localStorage in this browser only.
+    ============================================ -->
+
+    <section id="history" class="history-section hidden" aria-label="Recent searches">
+
       <div class="section-heading">
-        <h2>Recent searches</h2>
-        <p>Your latest searches are saved only in this browser.</p>
+        <div class="section-heading-row">
+          <div>
+            <h2>Recent searches</h2>
+            <p>Saved only in this browser.</p>
+          </div>
+          <button id="clearHistoryBtn" class="clear-history-btn" aria-label="Clear search history">
+            Clear history
+          </button>
+        </div>
       </div>
 
-      <div id="historyList" class="history-list"></div>
+      <div id="historyList" class="history-list" role="list"></div>
+
     </section>
 
-    <!-- Info cards -->
-    <section class="info-grid">
+
+    <!-- ============================================
+         FEATURE CARDS
+    ============================================ -->
+
+    <section class="info-grid" aria-label="Features">
+
       <article class="info-card">
-        <div class="info-icon">🔎</div>
-        <h3>Search facts</h3>
+        <div class="info-icon" aria-hidden="true">🔎</div>
+        <h3>Fact search</h3>
         <p>
-          Uses Wikipedia public APIs for normal searches and summaries.
+          Searches Wikipedia's public APIs to fetch accurate summaries and
+          extracts the most relevant part of the answer.
         </p>
       </article>
 
       <article class="info-card">
-        <div class="info-icon">⚖️</div>
-        <h3>Compare topics</h3>
+        <div class="info-icon" aria-hidden="true">⚖️</div>
+        <h3>Smart compare</h3>
         <p>
-          Can compare built-in facts like planets, cars, phones, and consoles.
+          Compares planets, cars, phones, consoles and more using a
+          built-in fact database with real numbers.
         </p>
       </article>
 
       <article class="info-card">
-        <div class="info-icon">🎤</div>
+        <div class="info-icon" aria-hidden="true">🎤</div>
         <h3>Voice input</h3>
         <p>
-          Ask questions using your microphone in supported browsers.
+          Ask questions using your microphone. Works in Chrome, Edge,
+          and Safari on supported devices.
         </p>
       </article>
 
       <article class="info-card">
-        <div class="info-icon">🔊</div>
+        <div class="info-icon" aria-hidden="true">🔊</div>
         <h3>Voice output</h3>
         <p>
-          Turn voice answers on or off whenever you want.
+          Enable voice answers to have results read aloud. Toggle it
+          on or off at any time using the speaker button.
         </p>
       </article>
+
+      <article class="info-card">
+        <div class="info-icon" aria-hidden="true">🕒</div>
+        <h3>Search history</h3>
+        <p>
+          Your last eight searches are saved in your browser so you
+          can jump back to them quickly.
+        </p>
+      </article>
+
+      <article class="info-card">
+        <div class="info-icon" aria-hidden="true">⚡</div>
+        <h3>Instant answers</h3>
+        <p>
+          Common facts like the speed of light, the value of pi, and
+          planet data are answered instantly without any API call.
+        </p>
+      </article>
+
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
+
+    <!-- ============================================
+         FOOTER
+    ============================================ -->
+
+    <footer class="footer" role="contentinfo">
       <p>
-        Built by Aras • Powered by Wikipedia public APIs and browser voice tools
+        Built by Aras &nbsp;·&nbsp;
+        Powered by Wikipedia public APIs and browser speech tools
       </p>
     </footer>
 
+
   </main>
 
-  <!-- JavaScript file -->
+
+  <!-- JavaScript -->
   <script src="script.js"></script>
+
 </body>
 </html>
